@@ -125,12 +125,14 @@
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
-            padding: 0.5rem 1rem;
+            padding: 0.375rem 0.75rem;
             border-radius: 50px;
-            font-size: 0.875rem;
+            font-size: 0.75rem;
             font-weight: 600;
-            box-shadow: var(--shadow-sm);
+            box-shadow: var(--shadow-md);
             transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
         }
 
         .status-badge:hover {
@@ -497,7 +499,7 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ route('properties.index') }}">
+                        <a class="nav-link" href="{{ route('home') }}">
                             <i class="bi bi-building me-1"></i> Properties
                         </a>
                     </li>

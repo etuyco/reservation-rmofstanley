@@ -14,7 +14,7 @@
                 <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window.location.reload()">
                     <i class="bi bi-arrow-clockwise me-1"></i> Refresh
                 </button>
-                <a href="{{ route('properties.index') }}" class="btn btn-primary btn-sm">
+                <a href="{{ route('home') }}" class="btn btn-primary btn-sm">
                     <i class="bi bi-building me-1"></i> Manage Properties
                 </a>
             </div>

@@ -63,7 +63,7 @@
 @empty
     <div class="alert alert-info">
         <i class="bi bi-info-circle"></i> You don't have any bookings yet.
-        <a href="{{ route('properties.index') }}" class="alert-link">Browse properties</a> to make a booking.
+        <a href="{{ route('home') }}" class="alert-link">Browse properties</a> to make a booking.
     </div>
 @endforelse
 @endsection

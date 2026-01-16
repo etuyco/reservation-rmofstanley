@@ -24,7 +24,7 @@ Route::get('/', [PropertyController::class, 'index'])->name('home');
 Auth::routes();
 
 // Property Routes (Public)
-Route::get('/properties', [PropertyController::class, 'index'])->name('properties.index');
+// Note: The homepage (/) uses the same controller method as /properties
 Route::get('/properties/{property}', [PropertyController::class, 'show'])->name('properties.show');
 
 // Public Reservation Routes (Allow guests to create reservations)

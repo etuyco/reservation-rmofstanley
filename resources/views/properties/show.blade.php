@@ -4,7 +4,7 @@
 
 @section('content')
 <div class="page-header mb-4">
-    <a href="{{ route('properties.index') }}" class="btn btn-outline-secondary mb-3">
+    <a href="{{ route('home') }}" class="btn btn-outline-secondary mb-3">
         <i class="bi bi-arrow-left me-2"></i> Back to Properties
     </a>
     <div class="d-flex justify-content-between align-items-start flex-wrap">
@@ -119,19 +119,23 @@
                             </div>
                         </div>
                     @endif
-                    @if($property->price_per_hour)
-                        <div class="col-12">
-                            <div class="d-flex align-items-center p-3 rounded" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
-                                <div class="me-3">
-                                    <i class="bi bi-currency-dollar" style="font-size: 2rem; color: #10b981;"></i>
-                                </div>
-                                <div>
-                                    <small class="text-muted d-block">Price per Hour</small>
-                                    <strong style="font-size: 1.25rem;">${{ number_format($property->price_per_hour, 2) }}</strong>
-                                </div>
+                    <div class="col-12">
+                        <div class="d-flex align-items-center p-3 rounded" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+                            <div class="me-3">
+                                <i class="bi bi-currency-dollar" style="font-size: 2rem; color: #10b981;"></i>
+                            </div>
+                            <div>
+                                <small class="text-muted d-block">Price per Hour</small>
+                                <strong style="font-size: 1.25rem;">
+                                    @if($property->price_per_hour == 0 || $property->price_per_hour === null)
+                                        <span class="text-success">FREE</span>
+                                    @else
+                                        ${{ number_format($property->price_per_hour, 2) }}
+                                    @endif
+                                </strong>
                             </div>
                         </div>
-                    @endif
+                    </div>
                 </div>
             </div>
         </div>

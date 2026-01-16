@@ -18,7 +18,7 @@
                 <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Property Information</h5>
             </div>
             <div class="card-body">
-                <form action="{{ route('admin.properties.update', $property) }}" method="POST">
+                <form action="{{ route('admin.properties.update', $property) }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
 
@@ -49,6 +49,32 @@
                         @error('description')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="image_url" class="form-label">Image URL</label>
+                        <input type="url" class="form-control @error('image_url') is-invalid @enderror" id="image_url" name="image_url" value="{{ old('image_url', $property->image_url) }}" placeholder="https://example.com/image.jpg">
+                        @error('image_url')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                        <small class="form-text text-muted">Enter a direct URL to an image (400x300 recommended)</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="image_file" class="form-label">Or Upload New Image File</label>
+                        <input type="file" class="form-control @error('image_file') is-invalid @enderror" id="image_file" name="image_file" accept="image/*">
+                        @error('image_file')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                        <small class="form-text text-muted">Upload an image file (JPEG, PNG, JPG, GIF - Max: 2MB). This will override the URL above and replace the current image.</small>
+                        @if($property->image_path || $property->image_url)
+                            <div class="mt-2">
+                                <small class="text-muted">Current image preview:</small>
+                                <div class="mt-1">
+                                    <img src="{{ $property->image ?? 'https://via.placeholder.com/200x150?text=No+Image' }}" alt="Current property image" class="img-thumbnail" style="max-width: 200px; max-height: 150px; object-fit: cover;">
+                                </div>
+                            </div>
+                        @endif
                     </div>
 
                     <div class="mb-3">

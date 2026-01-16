@@ -14,6 +14,8 @@ class Property extends Model
         'name',
         'type',
         'description',
+        'image_url',
+        'image_path',
         'location',
         'capacity',
         'price_per_hour',
@@ -108,5 +110,17 @@ class Property extends Model
         }
 
         return !$reservationQuery->exists();
+    }
+
+    /**
+     * Get the image URL (prioritizes uploaded files over external URLs)
+     */
+    public function getImageAttribute()
+    {
+        if ($this->image_path) {
+            return asset('storage/' . $this->image_path);
+        }
+        
+        return $this->image_url;
     }
 }
