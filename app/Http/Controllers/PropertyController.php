@@ -81,7 +81,7 @@ class PropertyController extends Controller
             $query->orderBy('name', 'asc');
         }
 
-        $properties = $query->paginate(12);
+        $properties = $query->paginate($request->get('per_page', 12));
         
         // Preserve query parameters in pagination links
         $properties->appends($request->query());
