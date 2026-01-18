@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\User;
 use App\Models\Property;
+use App\Models\Category;
 use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
@@ -16,6 +17,9 @@ class DatabaseSeeder extends Seeder
      */
     public function run()
     {
+        // Seed categories first
+        $this->call(CategorySeeder::class);
+
         // Create Admin User
         User::create([
             'name' => 'Admin User',
@@ -33,9 +37,13 @@ class DatabaseSeeder extends Seeder
         ]);
 
         // Create Sample Properties
+        $parkCategory = Category::where('name', 'Park')->first();
+        $conferenceCategory = Category::where('name', 'Conference Room')->first();
+        $equipmentCategory = Category::where('name', 'Equipment')->first();
+
         Property::create([
             'name' => 'Community Park',
-            'type' => 'Park',
+            'category_id' => $parkCategory->id,
             'description' => 'A beautiful community park with playground equipment, picnic areas, and walking trails.',
             'location' => 'Main Street, Stanley',
             'capacity' => 100,
@@ -45,7 +53,7 @@ class DatabaseSeeder extends Seeder
 
         Property::create([
             'name' => 'Conference Room A',
-            'type' => 'Conference Room',
+            'category_id' => $conferenceCategory->id,
             'description' => 'A spacious conference room equipped with projector, whiteboard, and seating for up to 30 people.',
             'location' => 'Community Center, 2nd Floor',
             'capacity' => 30,
@@ -55,7 +63,7 @@ class DatabaseSeeder extends Seeder
 
         Property::create([
             'name' => 'Conference Room B',
-            'type' => 'Conference Room',
+            'category_id' => $conferenceCategory->id,
             'description' => 'A smaller conference room perfect for meetings and presentations.',
             'location' => 'Community Center, 2nd Floor',
             'capacity' => 15,
@@ -65,7 +73,7 @@ class DatabaseSeeder extends Seeder
 
         Property::create([
             'name' => 'Projector Equipment',
-            'type' => 'Equipment',
+            'category_id' => $equipmentCategory->id,
             'description' => 'High-quality projector with screen and sound system.',
             'location' => 'Equipment Storage',
             'capacity' => null,
@@ -75,7 +83,7 @@ class DatabaseSeeder extends Seeder
 
         Property::create([
             'name' => 'Sound System',
-            'type' => 'Equipment',
+            'category_id' => $equipmentCategory->id,
             'description' => 'Professional sound system with microphones and speakers.',
             'location' => 'Equipment Storage',
             'capacity' => null,

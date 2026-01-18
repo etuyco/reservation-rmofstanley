@@ -91,170 +91,23 @@
 </div>
 
 <!-- Advanced Search & Filter Section -->
-<div class="card mb-4">
-    <div class="card-header">
-        <div class="d-flex justify-content-between align-items-center">
-            <h5 class="mb-0"><i class="bi bi-funnel me-2"></i>Search & Filter</h5>
-            <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#advancedFilters" aria-expanded="false">
-                <i class="bi bi-gear me-1"></i>Advanced Filters
-            </button>
-        </div>
-    </div>
-    <div class="card-body">
-        <form method="GET" action="{{ route('home') }}" class="mb-0">
-            <!-- Main Search Row -->
-            <div class="row g-3 mb-3">
-                <div class="col-md-6">
-                    <label for="search" class="form-label">Search Properties</label>
-                    <div class="input-group">
-                        <span class="input-group-text">
-                            <i class="bi bi-search"></i>
-                        </span>
-                        <input type="text" 
-                               class="form-control" 
-                               id="search" 
-                               name="search" 
-                               value="{{ request('search') }}" 
-                               placeholder="Search by name, location, or description...">
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <label for="type" class="form-label">Category</label>
-                    <select class="form-select" id="type" name="type">
-                        <option value="">All Categories</option>
-                        @foreach($propertyTypes as $propertyType)
-                            <option value="{{ $propertyType }}" {{ request('type') === $propertyType ? 'selected' : '' }}>
-                                {{ $propertyType }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-3 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary me-2">
-                        <i class="bi bi-search me-1"></i>Search
-                    </button>
-                    <a href="{{ route('home') }}" class="btn btn-outline-secondary">
-                        <i class="bi bi-x-circle me-1"></i>Clear
-                    </a>
-                </div>
-            </div>
-
-            <!-- Advanced Filters (Collapsible) -->
-            <div class="collapse" id="advancedFilters">
-                <div class="row g-3 pt-3 border-top">
-                    <div class="col-md-2">
-                        <label for="capacity" class="form-label">Min Capacity</label>
-                        <select class="form-select" id="capacity" name="capacity">
-                            <option value="">Any Capacity</option>
-                            <option value="1" {{ request('capacity') == '1' ? 'selected' : '' }}>1+ People</option>
-                            <option value="5" {{ request('capacity') == '5' ? 'selected' : '' }}>5+ People</option>
-                            <option value="10" {{ request('capacity') == '10' ? 'selected' : '' }}>10+ People</option>
-                            <option value="25" {{ request('capacity') == '25' ? 'selected' : '' }}>25+ People</option>
-                            <option value="50" {{ request('capacity') == '50' ? 'selected' : '' }}>50+ People</option>
-                            <option value="100" {{ request('capacity') == '100' ? 'selected' : '' }}>100+ People</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <label for="location" class="form-label">Location</label>
-                        <select class="form-select" id="location" name="location">
-                            <option value="">Any Location</option>
-                            @foreach($locations as $location)
-                                <option value="{{ $location }}" {{ request('location') === $location ? 'selected' : '' }}>
-                                    {{ $location }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <label for="min_price" class="form-label">Min Price/Hour</label>
-                        <div class="input-group">
-                            <span class="input-group-text">$</span>
-                            <input type="number" 
-                                   class="form-control" 
-                                   id="min_price" 
-                                   name="min_price" 
-                                   value="{{ request('min_price') }}" 
-                                   placeholder="0"
-                                   min="0" 
-                                   step="0.01">
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <label for="max_price" class="form-label">Max Price/Hour</label>
-                        <div class="input-group">
-                            <span class="input-group-text">$</span>
-                            <input type="number" 
-                                   class="form-control" 
-                                   id="max_price" 
-                                   name="max_price" 
-                                   value="{{ request('max_price') }}" 
-                                   placeholder="{{ $priceRange->max_price ?? '1000' }}"
-                                   min="0" 
-                                   step="0.01">
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <label for="sort_by" class="form-label">Sort By</label>
-                        <div class="input-group">
-                            <select class="form-select" id="sort_by" name="sort_by">
-                                <option value="name" {{ request('sort_by', 'name') === 'name' ? 'selected' : '' }}>Name</option>
-                                <option value="price_per_hour" {{ request('sort_by') === 'price_per_hour' ? 'selected' : '' }}>Price</option>
-                                <option value="capacity" {{ request('sort_by') === 'capacity' ? 'selected' : '' }}>Capacity</option>
-                                <option value="created_at" {{ request('sort_by') === 'created_at' ? 'selected' : '' }}>Newest</option>
-                            </select>
-                            <select class="form-select" name="sort_direction" style="max-width: 100px;">
-                                <option value="asc" {{ request('sort_direction', 'asc') === 'asc' ? 'selected' : '' }}>↑</option>
-                                <option value="desc" {{ request('sort_direction') === 'desc' ? 'selected' : '' }}>↓</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </form>
-    </div>
-</div>
 
 <!-- Quick Category Filter Buttons -->
 <div class="mb-4">
     <div class="d-flex flex-wrap gap-2 mb-3">
         <a href="{{ route('home') }}" 
            class="btn {{ !request('type') ? 'btn-primary' : 'btn-outline-primary' }} btn-sm">
-            <i class="bi bi-grid me-1"></i>All Categories
+            <i class="bi bi-grid me-1"></i>All Properties
         </a>
-        @foreach($propertyTypes as $propertyType)
-            <a href="{{ route('home', array_merge(request()->query(), ['type' => $propertyType])) }}" 
-               class="btn {{ request('type') === $propertyType ? 'btn-primary' : 'btn-outline-primary' }} btn-sm">
-                @if($propertyType === 'Park')
-                    <i class="bi bi-tree me-1"></i>
-                @elseif($propertyType === 'Conference Room')
-                    <i class="bi bi-people me-1"></i>
-                @else
-                    <i class="bi bi-tools me-1"></i>
+        @foreach($categories ?? [] as $category)
+            <a href="{{ route('home', array_merge(request()->query(), ['type' => $category->name])) }}" 
+               class="btn {{ request('type') === $category->name ? 'btn-primary' : 'btn-outline-primary' }} btn-sm">
+                @if($category->icon)
+                    <i class="{{ $category->icon }} me-1"></i>
                 @endif
-                {{ $propertyType }}
+                {{ $category->name }}
             </a>
         @endforeach
-    </div>
-    
-    <!-- Quick Preset Filters -->
-    <div class="d-flex flex-wrap gap-2">
-        <small class="text-muted me-2 align-self-center">Quick filters:</small>
-        <a href="{{ route('home', ['min_price' => 0, 'max_price' => 0]) }}" 
-           class="btn btn-outline-success btn-sm {{ request('min_price') == 0 && request('max_price') == 0 ? 'active' : '' }}">
-            <i class="bi bi-gift me-1"></i>Free Only
-        </a>
-        <a href="{{ route('home', ['capacity' => 50]) }}" 
-           class="btn btn-outline-info btn-sm {{ request('capacity') == 50 ? 'active' : '' }}">
-            <i class="bi bi-people-fill me-1"></i>Large Groups (50+)
-        </a>
-        <a href="{{ route('home', ['sort_by' => 'price_per_hour', 'sort_direction' => 'asc']) }}" 
-           class="btn btn-outline-warning btn-sm {{ request('sort_by') == 'price_per_hour' && request('sort_direction') == 'asc' ? 'active' : '' }}">
-            <i class="bi bi-sort-numeric-up me-1"></i>Lowest Price
-        </a>
-        <a href="{{ route('home', ['sort_by' => 'created_at', 'sort_direction' => 'desc']) }}" 
-           class="btn btn-outline-secondary btn-sm {{ request('sort_by') == 'created_at' && request('sort_direction') == 'desc' ? 'active' : '' }}">
-            <i class="bi bi-clock me-1"></i>Newest
-        </a>
     </div>
 </div>
 
@@ -293,12 +146,10 @@
                     @else
                         <div class="w-100 h-100 d-flex align-items-center justify-content-center" 
                              style="background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);">
-                            @if($property->type === 'Park')
-                                <i class="bi bi-tree" style="font-size: 3rem; color: #6b7280;"></i>
-                            @elseif($property->type === 'Conference Room')
-                                <i class="bi bi-people" style="font-size: 3rem; color: #6b7280;"></i>
+                            @if($property->category && $property->category->icon)
+                                <i class="{{ $property->category->icon }}" style="font-size: 3rem; color: #6b7280;"></i>
                             @else
-                                <i class="bi bi-tools" style="font-size: 3rem; color: #6b7280;"></i>
+                                <i class="bi bi-building" style="font-size: 3rem; color: #6b7280;"></i>
                             @endif
                         </div>
                     @endif
@@ -325,7 +176,10 @@
 
                     <!-- Property Type Badge -->
                     <div class="position-absolute bottom-0 start-0 m-2">
-                        <span class="badge" style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); color: white;">
+                        <span class="badge" style="background: {{ $property->category && $property->category->color ? $property->category->color : '#3b82f6' }}; color: white;">
+                            @if($property->category && $property->category->icon)
+                                <i class="{{ $property->category->icon }} me-1"></i>
+                            @endif
                             {{ $property->type }}
                         </span>
                     </div>

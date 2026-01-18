@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Property;
+use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -10,7 +11,7 @@ class PropertyController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Property::where('is_active', true);
+        $query = Property::with('category')->where('is_active', true);
 
         // Search by name, location, or description
         if ($request->filled('search')) {
@@ -22,9 +23,12 @@ class PropertyController extends Controller
             });
         }
 
-        // Filter by type
+        // Filter by type (now using category)
         if ($request->filled('type')) {
-            $query->where('type', $request->get('type'));
+            $categoryName = $request->get('type');
+            $query->whereHas('category', function ($q) use ($categoryName) {
+                $q->where('name', $categoryName);
+            });
         }
 
         // Filter by minimum capacity
@@ -82,14 +86,9 @@ class PropertyController extends Controller
         // Preserve query parameters in pagination links
         $properties->appends($request->query());
 
-        // Get property types for filter dropdown
-        $propertyTypes = Property::where('is_active', true)
-            ->distinct()
-            ->pluck('type')
-            ->filter()
-            ->sort()
-            ->values()
-            ->toArray();
+        // Get categories for filter dropdown
+        $categories = Category::active()->orderBy('name')->get();
+        $propertyTypes = $categories->pluck('name')->toArray();
 
         // Get unique locations for filter dropdown
         $locations = Property::where('is_active', true)
@@ -116,7 +115,8 @@ class PropertyController extends Controller
         // Always use properties.index view (now serves as homepage too)
         return view('properties.index', compact(
             'properties', 
-            'propertyTypes', 
+            'propertyTypes',
+            'categories', 
             'locations',
             'totalProperties', 
             'availableNow',
@@ -134,8 +134,9 @@ class PropertyController extends Controller
      */
     public function adminIndex()
     {
-        $properties = Property::latest()->get();
-        return view('admin.properties.index', compact('properties'));
+        $properties = Property::with('category')->latest()->get();
+        $categories = Category::active()->orderBy('name')->get();
+        return view('admin.properties.index', compact('properties', 'categories'));
     }
 
     /**
@@ -143,7 +144,8 @@ class PropertyController extends Controller
      */
     public function create()
     {
-        return view('properties.create');
+        $categories = Category::active()->orderBy('name')->get();
+        return view('properties.create', compact('categories'));
     }
 
     /**
@@ -153,13 +155,14 @@ class PropertyController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'type' => 'required|in:Park,Conference Room,Equipment',
+            'category_id' => 'required|exists:categories,id',
             'description' => 'nullable|string',
             'image_url' => 'nullable|url',
             'image_file' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'location' => 'nullable|string|max:255',
             'capacity' => 'nullable|integer|min:1',
             'price_per_hour' => 'nullable|numeric|min:0',
+            'max_daily_booking_days' => 'nullable|integer|min:1|max:365',
             'is_active' => 'boolean',
         ]);
 
@@ -183,7 +186,8 @@ class PropertyController extends Controller
      */
     public function edit(Property $property)
     {
-        return view('properties.edit', compact('property'));
+        $categories = Category::active()->orderBy('name')->get();
+        return view('properties.edit', compact('property', 'categories'));
     }
 
     /**
@@ -193,13 +197,14 @@ class PropertyController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'type' => 'required|in:Park,Conference Room,Equipment',
+            'category_id' => 'required|exists:categories,id',
             'description' => 'nullable|string',
             'image_url' => 'nullable|url',
             'image_file' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'location' => 'nullable|string|max:255',
             'capacity' => 'nullable|integer|min:1',
             'price_per_hour' => 'nullable|numeric|min:0',
+            'max_daily_booking_days' => 'nullable|integer|min:1|max:365',
             'is_active' => 'boolean',
         ]);
 

@@ -31,14 +31,16 @@
                     </div>
 
                     <div class="mb-3">
-                        <label for="type" class="form-label">Property Type <span class="text-danger">*</span></label>
-                        <select class="form-select @error('type') is-invalid @enderror" id="type" name="type" required>
-                            <option value="">Select a type</option>
-                            <option value="Park" {{ old('type', $property->type) == 'Park' ? 'selected' : '' }}>Park</option>
-                            <option value="Conference Room" {{ old('type', $property->type) == 'Conference Room' ? 'selected' : '' }}>Conference Room</option>
-                            <option value="Equipment" {{ old('type', $property->type) == 'Equipment' ? 'selected' : '' }}>Equipment</option>
+                        <label for="category_id" class="form-label">Category <span class="text-danger">*</span></label>
+                        <select class="form-select @error('category_id') is-invalid @enderror" id="category_id" name="category_id" required>
+                            <option value="">Select a category</option>
+                            @foreach($categories as $category)
+                                <option value="{{ $category->id }}" {{ old('category_id', $property->category_id) == $category->id ? 'selected' : '' }}>
+                                    {{ $category->name }}
+                                </option>
+                            @endforeach
                         </select>
-                        @error('type')
+                        @error('category_id')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
@@ -105,6 +107,15 @@
                                 @enderror
                             </div>
                         </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="max_daily_booking_days" class="form-label">Maximum Daily Booking Days</label>
+                        <input type="number" class="form-control @error('max_daily_booking_days') is-invalid @enderror" id="max_daily_booking_days" name="max_daily_booking_days" value="{{ old('max_daily_booking_days', $property->max_daily_booking_days ?? 7) }}" min="1" max="365">
+                        @error('max_daily_booking_days')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                        <small class="form-text text-muted">Maximum number of consecutive days a user can book this property for daily reservations (default: 7 days)</small>
                     </div>
 
                     <div class="mb-3 form-check">

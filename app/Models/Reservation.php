@@ -16,6 +16,7 @@ class Reservation extends Model
         'start_time',
         'end_time',
         'status',
+        'booking_type',
         'purpose',
         'admin_notes',
         'guest_name',

@@ -438,12 +438,10 @@
                                      class="property-image">
                             @else
                                 <div class="property-image d-flex align-items-center justify-content-center">
-                                    @if($property->type === 'Park')
-                                        <i class="bi bi-tree text-muted" style="font-size: 3rem;"></i>
-                                    @elseif($property->type === 'Conference Room')
-                                        <i class="bi bi-people text-muted" style="font-size: 3rem;"></i>
+                                    @if($property->category && $property->category->icon)
+                                        <i class="{{ $property->category->icon }} text-muted" style="font-size: 3rem;"></i>
                                     @else
-                                        <i class="bi bi-tools text-muted" style="font-size: 3rem;"></i>
+                                        <i class="bi bi-building text-muted" style="font-size: 3rem;"></i>
                                     @endif
                                 </div>
                             @endif
@@ -457,7 +455,10 @@
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-start mb-2">
                                 <h5 class="card-title mb-0">{{ $property->name }}</h5>
-                                <span class="property-type-badge" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white;">
+                                <span class="property-type-badge" style="background: {{ $property->category && $property->category->color ? $property->category->color : '#3b82f6' }}; color: white;">
+                                    @if($property->category && $property->category->icon)
+                                        <i class="{{ $property->category->icon }} me-1"></i>
+                                    @endif
                                     {{ $property->type }}
                                 </span>
                             </div>
@@ -550,6 +551,7 @@
                             <th class="border-0 text-muted fw-semibold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; padding: 1.5rem 1rem 1rem;">Location</th>
                             <th class="border-0 text-muted fw-semibold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; padding: 1.5rem 1rem 1rem;">Capacity</th>
                             <th class="border-0 text-muted fw-semibold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; padding: 1.5rem 1rem 1rem;">Price/Hour</th>
+                            <th class="border-0 text-muted fw-semibold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; padding: 1.5rem 1rem 1rem;">Max Days</th>
                             <th class="border-0 text-muted fw-semibold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; padding: 1.5rem 1rem 1rem;">Status</th>
                             <th class="border-0 text-muted fw-semibold text-uppercase text-end" style="font-size: 0.75rem; letter-spacing: 0.5px; padding: 1.5rem 1rem 1rem;">Actions</th>
                         </tr>
@@ -567,12 +569,10 @@
                                         @else
                                             <div class="rounded-3 me-3 d-flex align-items-center justify-content-center shadow-sm" 
                                                  style="width: 48px; height: 48px; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border: 1px solid #e2e8f0;">
-                                                @if($property->type === 'Park')
-                                                    <i class="bi bi-tree text-success"></i>
-                                                @elseif($property->type === 'Conference Room')
-                                                    <i class="bi bi-people text-primary"></i>
+                                                @if($property->category && $property->category->icon)
+                                                    <i class="{{ $property->category->icon }}" style="color: {{ $property->category->color ?? '#6b7280' }}"></i>
                                                 @else
-                                                    <i class="bi bi-tools text-warning"></i>
+                                                    <i class="bi bi-building text-muted"></i>
                                                 @endif
                                             </div>
                                         @endif
@@ -584,12 +584,8 @@
                                 </td>
                                 <td class="py-3 px-4 border-top" style="border-color: #f1f5f9 !important;">
                                     <span class="badge modern-type-badge">
-                                        @if($property->type === 'Park')
-                                            <i class="bi bi-tree me-1"></i>
-                                        @elseif($property->type === 'Conference Room')
-                                            <i class="bi bi-people me-1"></i>
-                                        @else
-                                            <i class="bi bi-tools me-1"></i>
+                                        @if($property->category && $property->category->icon)
+                                            <i class="{{ $property->category->icon }} me-1"></i>
                                         @endif
                                         {{ $property->type }}
                                     </span>
@@ -622,6 +618,13 @@
                                     @else
                                         <span class="text-muted">—</span>
                                     @endif
+                                </td>
+                                <td class="py-3 px-4 border-top" style="border-color: #f1f5f9 !important;">
+                                    <div class="d-flex align-items-center text-muted">
+                                        <i class="bi bi-calendar-date me-2"></i>
+                                        <span class="fw-medium">{{ $property->max_daily_booking_days ?? 7 }}</span>
+                                        <small class="text-muted ms-1">days</small>
+                                    </div>
                                 </td>
                                 <td class="py-3 px-4 border-top" style="border-color: #f1f5f9 !important;">
                                     @if($property->is_active)

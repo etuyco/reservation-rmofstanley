@@ -38,6 +38,7 @@
                                 <th>Guest/User</th>
                                 <th>Start Time</th>
                                 <th>End Time</th>
+                                <th>Duration</th>
                                 <th>Status</th>
                                 <th>Actions</th>
                             </tr>
@@ -75,6 +76,26 @@
                                     <td>
                                         <div class="fw-semibold text-danger">{{ $reservation->end_time->format('M d, Y') }}</div>
                                         <small class="text-muted">{{ $reservation->end_time->format('h:i A') }}</small>
+                                    </td>
+                                    <td>
+                                        @if($reservation->booking_type === 'daily')
+                                            @php
+                                                $days = $reservation->start_time->diffInDays($reservation->end_time) + 1;
+                                            @endphp
+                                            <div class="fw-semibold text-info">
+                                                {{ $days }} {{ $days === 1 ? 'day' : 'days' }}
+                                            </div>
+                                            <small class="text-muted">Daily booking</small>
+                                        @else
+                                            @php
+                                                $hours = $reservation->start_time->diffInHours($reservation->end_time);
+                                                $minutes = $reservation->start_time->diffInMinutes($reservation->end_time) % 60;
+                                            @endphp
+                                            <div class="fw-semibold text-primary">
+                                                {{ $hours }}h {{ $minutes > 0 ? $minutes.'m' : '' }}
+                                            </div>
+                                            <small class="text-muted">Hourly booking</small>
+                                        @endif
                                     </td>
                                     <td>
                                         @switch($reservation->status)
@@ -133,7 +154,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7" class="text-center text-muted">
+                                    <td colspan="8" class="text-center text-muted">
                                         No reservations found. Check back later for new reservations.
                                     </td>
                                 </tr>
@@ -188,7 +209,23 @@
                             </div>
                             <div class="mb-3">
                                 <label class="form-label fw-semibold">Duration:</label>
-                                <p class="mb-1">{{ $reservation->start_time->diffForHumans($reservation->end_time, true) }}</p>
+                                <p class="mb-1">
+                                    @if($reservation->booking_type === 'daily')
+                                        @php
+                                            $days = $reservation->start_time->diffInDays($reservation->end_time) + 1;
+                                        @endphp
+                                        <span class="badge bg-info">{{ $days }} {{ $days === 1 ? 'Day' : 'Days' }}</span>
+                                        (Daily Booking: {{ $reservation->start_time->format('M j') }} - {{ $reservation->end_time->format('M j, Y') }})
+                                    @else
+                                        @php
+                                            $totalMinutes = $reservation->start_time->diffInMinutes($reservation->end_time);
+                                            $hours = intval($totalMinutes / 60);
+                                            $minutes = $totalMinutes % 60;
+                                        @endphp
+                                        <span class="badge bg-primary">{{ $hours }} Hours {{ $minutes > 0 ? $minutes.' Minutes' : '' }}</span>
+                                        (Hourly Booking)
+                                    @endif
+                                </p>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label fw-semibold">Status:</label>

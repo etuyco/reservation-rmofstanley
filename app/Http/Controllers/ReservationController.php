@@ -57,129 +57,98 @@ class ReservationController extends Controller
 
     public function getCalendarAvailability(Request $request, Property $property)
     {
-        $date = $request->get('date', now()->format('Y-m-d'));
-        $startDate = Carbon::parse($date)->startOfDay();
-        $endDate = Carbon::parse($date)->endOfDay();
+        try {
+            $date = $request->get('date', now()->format('Y-m-d'));
+            $startDate = Carbon::parse($date)->startOfDay();
+            $endDate = Carbon::parse($date)->endOfDay();
 
-        \Log::info("Getting calendar availability", [
-            'property_id' => $property->id,
-            'property_name' => $property->name,
-            'date' => $date
-        ]);
+            \Log::info("Getting calendar availability", [
+                'property_id' => $property->id,
+                'property_name' => $property->name,
+                'date' => $date
+            ]);
 
-        // Get all reservations and bookings for this property and date
-        $reservations = $property->reservations()
-            ->where('status', 'approved')
-            ->where(function($query) use ($date, $startDate, $endDate) {
-                $query->whereDate('start_time', $date)
-                      ->orWhereDate('end_time', $date)
-                      ->orWhere(function($subQuery) use ($startDate, $endDate) {
-                          $subQuery->where('start_time', '<=', $startDate)
-                                   ->where('end_time', '>=', $endDate);
-                      });
-            })
-            ->with('user')
-            ->get();
+            // Get all reservations for this property that overlap with the requested date
+            $reservations = $property->reservations()
+                ->where('status', 'approved')
+                ->where(function($query) use ($startDate, $endDate) {
+                    // Check for any overlap with the requested day
+                    $query->where(function($overlap) use ($startDate, $endDate) {
+                        $overlap->whereBetween('start_time', [$startDate, $endDate])
+                               ->orWhereBetween('end_time', [$startDate, $endDate])
+                               ->orWhere(function($contains) use ($startDate, $endDate) {
+                                   $contains->where('start_time', '<=', $startDate)
+                                           ->where('end_time', '>=', $endDate);
+                               });
+                    });
+                })
+                ->with('user')
+                ->get();
 
-        $bookings = $property->bookings()
-            ->where('status', 'approved')
-            ->where(function($query) use ($date, $startDate, $endDate) {
-                $query->whereDate('start_time', $date)
-                      ->orWhereDate('end_time', $date)
-                      ->orWhere(function($subQuery) use ($startDate, $endDate) {
-                          $subQuery->where('start_time', '<=', $startDate)
-                                   ->where('end_time', '>=', $endDate);
-                      });
-            })
-            ->with('user')
-            ->get();
-
-        \Log::info("Found reservations/bookings", [
-            'property_id' => $property->id,
-            'reservations_count' => $reservations->count(),
-            'bookings_count' => $bookings->count(),
-            'reservations' => $reservations->map(function($r) {
-                return [
-                    'id' => $r->id,
-                    'start_time' => $r->start_time,
-                    'end_time' => $r->end_time,
-                    'property_id' => $r->property_id
-                ];
-            }),
-            'bookings' => $bookings->map(function($b) {
-                return [
-                    'id' => $b->id,
-                    'start_time' => $b->start_time,
-                    'end_time' => $b->end_time,
-                    'property_id' => $b->property_id
-                ];
-            })
-        ]);
-
-        // Generate hourly time slots from 7 AM to 10 PM
-        $timeSlots = [];
-        $currentTime = $startDate->copy()->setTime(7, 0);
-        $endTime = $startDate->copy()->setTime(22, 0);
-
-        while ($currentTime <= $endTime) {
-            $slotStart = $currentTime->copy();
-            $slotEnd = $currentTime->copy()->addHour();
-            
-            $isAvailable = true;
-            $conflictInfo = null;
-
-            // Check if this hour conflicts with any reservations
-            foreach ($reservations as $reservation) {
-                if ($slotStart < $reservation->end_time && $slotEnd > $reservation->start_time) {
-                    $isAvailable = false;
-                    $conflictInfo = [
-                        'type' => 'reservation',
-                        'contact' => $reservation->contact_name ?: ($reservation->user ? $reservation->user->name : 'Guest'),
-                        'purpose' => $reservation->purpose,
-                        'start' => $reservation->start_time->format('H:i'),
-                        'end' => $reservation->end_time->format('H:i')
+            \Log::info("Found reservations", [
+                'property_id' => $property->id,
+                'reservations_count' => $reservations->count(),
+                'reservations_details' => $reservations->map(function($res) {
+                    return [
+                        'id' => $res->id,
+                        'start' => $res->start_time->format('Y-m-d H:i'),
+                        'end' => $res->end_time->format('Y-m-d H:i'),
+                        'type' => $res->booking_type
                     ];
-                    break;
-                }
-            }
+                })
+            ]);
 
-            // Check if this hour conflicts with any bookings
-            if ($isAvailable) {
-                foreach ($bookings as $booking) {
-                    if ($slotStart < $booking->end_time && $slotEnd > $booking->start_time) {
+            // Generate hourly time slots from 7 AM to 10 PM
+            $timeSlots = [];
+            $currentTime = $startDate->copy()->setTime(7, 0);
+            $endTime = $startDate->copy()->setTime(22, 0);
+
+            while ($currentTime <= $endTime) {
+                $slotStart = $currentTime->copy();
+                $slotEnd = $currentTime->copy()->addHour();
+                
+                $isAvailable = true;
+                $conflictInfo = null;
+
+                // Check if this hour conflicts with any reservations
+                foreach ($reservations as $reservation) {
+                    if ($slotStart < $reservation->end_time && $slotEnd > $reservation->start_time) {
                         $isAvailable = false;
                         $conflictInfo = [
-                            'type' => 'booking',
-                            'contact' => $booking->user ? $booking->user->name : 'Guest',
-                            'purpose' => $booking->purpose,
-                            'start' => $booking->start_time->format('H:i'),
-                            'end' => $booking->end_time->format('H:i')
+                            'type' => $reservation->booking_type === 'daily' ? 'Daily Reservation' : 'Hourly Reservation',
+                            'contact' => $reservation->guest_name ?: ($reservation->user ? $reservation->user->name : 'Guest'),
+                            'purpose' => $reservation->purpose,
+                            'start' => $reservation->start_time->format('M j, Y H:i'),
+                            'end' => $reservation->end_time->format('M j, Y H:i')
                         ];
                         break;
                     }
                 }
+
+                $timeSlots[] = [
+                    'time' => $currentTime->format('H:i'),
+                    'display_time' => $currentTime->format('h:i A'),
+                    'datetime' => $currentTime->format('Y-m-d\TH:i'),
+                    'available' => $isAvailable,
+                    'conflict' => $conflictInfo
+                ];
+
+                $currentTime->addHour();
             }
 
-            $timeSlots[] = [
-                'time' => $currentTime->format('H:i'),
-                'display_time' => $currentTime->format('h:i A'),
-                'datetime' => $currentTime->format('Y-m-d\TH:i'),
-                'available' => $isAvailable,
-                'conflict' => $conflictInfo
-            ];
-
-            $currentTime->addHour();
+            return response()->json([
+                'date' => $date,
+                'slots' => $timeSlots,
+                'property' => [
+                    'id' => $property->id,
+                    'name' => $property->name,
+                    'price_per_hour' => $property->price_per_hour
+                ]
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error in getCalendarAvailability: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to load calendar data'], 500);
         }
-
-        return response()->json([
-            'date' => $date,
-            'slots' => $timeSlots,
-            'property' => [
-                'id' => $property->id,
-                'name' => $property->name,
-                'price_per_hour' => $property->price_per_hour
-            ]
-        ]);
     }
 
     private function suggestAlternativeTimes(Property $property, $startTime, $endTime)
@@ -228,10 +197,21 @@ class ReservationController extends Controller
     public function store(Request $request, Property $property)
     {
         $validationRules = [
-            'start_time' => 'required|date|after_or_equal:' . now()->format('Y-m-d H:i'),
-            'end_time' => 'required|date|after:start_time',
+            'booking_type' => 'required|in:hourly,daily',
             'purpose' => 'nullable|string|max:1000',
         ];
+
+        // Add specific validation rules based on booking type
+        if ($request->booking_type === 'hourly') {
+            $validationRules = array_merge($validationRules, [
+                'start_time' => 'required|date|after_or_equal:' . now()->format('Y-m-d H:i'),
+                'end_time' => 'required|date|after:start_time',
+            ]);
+        } else if ($request->booking_type === 'daily') {
+            $validationRules = array_merge($validationRules, [
+                'selected_days' => 'required|json',
+            ]);
+        }
 
         // Add guest validation rules if user is not authenticated
         if (!Auth::check()) {
@@ -254,6 +234,17 @@ class ReservationController extends Controller
             throw $e;
         }
 
+        // Handle daily bookings
+        if ($request->booking_type === 'daily') {
+            return $this->storeDailyBooking($request, $property);
+        }
+
+        // Handle hourly bookings (existing logic)
+        return $this->storeHourlyBooking($request, $property);
+    }
+
+    private function storeHourlyBooking(Request $request, Property $property)
+    {
         // Check if property is available
         if (!$property->isAvailableFor($request->start_time, $request->end_time)) {
             // Get detailed conflict information and suggestions
@@ -277,6 +268,7 @@ class ReservationController extends Controller
             'end_time' => $request->end_time,
             'purpose' => $request->purpose,
             'status' => 'pending',
+            'booking_type' => 'hourly',
         ];
 
         // Handle authenticated vs guest users
@@ -292,16 +284,109 @@ class ReservationController extends Controller
             ]);
         }
 
-        Log::info('Creating reservation with data:', $reservationData);
+        Log::info('Creating hourly reservation with data:', $reservationData);
         
         $reservation = Reservation::create($reservationData);
         
-        Log::info('Reservation created:', ['id' => $reservation->id, 'created' => true]);
+        Log::info('Hourly reservation created:', ['id' => $reservation->id, 'created' => true]);
 
         if (Auth::check()) {
-            return redirect()->route('reservations.index')->with('success', 'Reservation request submitted successfully. Waiting for admin approval.');
+            return redirect()->route('reservations.index')->with('success', 'Hourly reservation request submitted successfully. Waiting for admin approval.');
         } else {
-            return redirect()->route('properties.show', $property)->with('success', 'Reservation request submitted successfully! We will contact you at ' . $request->guest_email . ' regarding your reservation.');
+            return redirect()->route('properties.show', $property)->with('success', 'Hourly reservation request submitted successfully! We will contact you at ' . $request->guest_email . ' regarding your reservation.');
+        }
+    }
+
+    private function storeDailyBooking(Request $request, Property $property)
+    {
+        $selectedDays = json_decode($request->selected_days, true);
+        
+        if (!is_array($selectedDays) || count($selectedDays) === 0) {
+            return back()->withErrors([
+                'selected_days' => 'You must select at least one day for daily booking.',
+            ])->withInput();
+        }
+
+        if (count($selectedDays) > $property->max_daily_booking_days) {
+            return back()->withErrors([
+                'selected_days' => "You can select up to {$property->max_daily_booking_days} days for daily booking.",
+            ])->withInput();
+        }
+
+        // Sort the selected days to get proper start and end dates
+        sort($selectedDays);
+
+        // Validate that all selected days are in the future
+        $now = now();
+        foreach ($selectedDays as $dayStr) {
+            $dayDate = Carbon::parse($dayStr);
+            if ($dayDate->isBefore($now->startOfDay())) {
+                return back()->withErrors([
+                    'selected_days' => 'Cannot book dates in the past.',
+                ])->withInput();
+            }
+        }
+
+        // Check availability for each day (full day booking: 8 AM to 6 PM)
+        $conflicts = [];
+        foreach ($selectedDays as $dayStr) {
+            $dayStart = Carbon::parse($dayStr)->setHour(8)->setMinute(0);
+            $dayEnd = Carbon::parse($dayStr)->setHour(18)->setMinute(0);
+            
+            if (!$property->isAvailableFor($dayStart, $dayEnd)) {
+                $conflicts[] = $dayStart->format('M d, Y');
+            }
+        }
+
+        if (!empty($conflicts)) {
+            $conflictDates = implode(', ', $conflicts);
+            return back()->withErrors([
+                'availability' => "Property is not available for the following days: {$conflictDates}",
+            ])->withInput();
+        }
+
+        // Create a single reservation covering the date range
+        $startDate = Carbon::parse($selectedDays[0])->setHour(8)->setMinute(0);
+        $endDate = Carbon::parse(end($selectedDays))->setHour(18)->setMinute(0);
+        
+        $reservationData = [
+            'property_id' => $property->id,
+            'start_time' => $startDate,
+            'end_time' => $endDate,
+            'purpose' => $request->purpose,
+            'status' => 'pending',
+            'booking_type' => 'daily',
+        ];
+
+        // Handle authenticated vs guest users
+        if (Auth::check()) {
+            $reservationData['user_id'] = Auth::id();
+        } else {
+            $reservationData = array_merge($reservationData, [
+                'guest_name' => $request->guest_name,
+                'guest_email' => $request->guest_email,
+                'guest_phone' => $request->guest_phone,
+                'guest_organization' => $request->guest_organization,
+            ]);
+        }
+
+        $reservation = Reservation::create($reservationData);
+        
+        Log::info('Daily reservation created as date range:', [
+            'id' => $reservation->id, 
+            'start_date' => $startDate->format('Y-m-d'),
+            'end_date' => $endDate->format('Y-m-d'),
+            'selected_days' => $selectedDays,
+            'days_count' => count($selectedDays)
+        ]);
+
+        $daysCount = count($selectedDays);
+        $daysText = $daysCount === 1 ? 'day' : 'days';
+
+        if (Auth::check()) {
+            return redirect()->route('reservations.index')->with('success', "Daily reservation request for {$daysCount} {$daysText} submitted successfully. Waiting for admin approval.");
+        } else {
+            return redirect()->route('properties.show', $property)->with('success', "Daily reservation request for {$daysCount} {$daysText} submitted successfully! We will contact you at " . $request->guest_email . " regarding your reservation.");
         }
     }
 

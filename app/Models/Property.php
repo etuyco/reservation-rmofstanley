@@ -12,13 +12,14 @@ class Property extends Model
 
     protected $fillable = [
         'name',
-        'type',
+        'category_id',
         'description',
         'image_url',
         'image_path',
         'location',
         'capacity',
         'price_per_hour',
+        'max_daily_booking_days',
         'is_active',
     ];
 
@@ -26,6 +27,11 @@ class Property extends Model
         'is_active' => 'boolean',
         'price_per_hour' => 'decimal:2',
     ];
+
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
+    }
 
     public function bookings()
     {
@@ -122,5 +128,13 @@ class Property extends Model
         }
         
         return $this->image_url;
+    }
+
+    /**
+     * Get the property type from category for backward compatibility
+     */
+    public function getTypeAttribute()
+    {
+        return $this->category ? $this->category->name : null;
     }
 }
