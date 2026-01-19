@@ -158,10 +158,10 @@
 <!-- Quick Category Filter Buttons -->
 <div class="mb-4">
     <div class="d-flex flex-wrap gap-2 mb-3">
-        <a href="{{ route('home') }}" 
+        <!-- <a href="{{ route('home') }}" 
            class="btn {{ !request('type') ? 'btn-primary' : 'btn-outline-primary' }} btn-sm">
             <i class="bi bi-grid me-1"></i>All Properties
-        </a>
+        </a> -->
         @foreach($categories ?? [] as $category)
             <a href="{{ route('home', array_merge(request()->query(), ['type' => $category->name])) }}" 
                class="btn {{ request('type') === $category->name ? 'btn-primary' : 'btn-outline-primary' }} btn-sm">

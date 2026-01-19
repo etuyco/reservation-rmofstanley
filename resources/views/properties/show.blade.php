@@ -350,7 +350,7 @@
 
                     <div class="mb-3">
                         <label class="form-label small fw-semibold text-muted">Purpose of Reservation</label>
-                        <textarea class="form-control" name="purpose" placeholder="Briefly describe the purpose of your reservation..." rows="3" required style="resize: vertical;"></textarea>
+                        <textarea class="form-control" name="purpose" placeholder="Briefly describe the purpose of your reservation and how many people will be attending..." rows="3" required style="resize: vertical;"></textarea>
                     </div>
 
                     <div class="d-grid gap-2">
@@ -1022,7 +1022,16 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const propertyId = {{ $property->id }};
     const maxDailyBookingDays = {{ $property->max_daily_booking_days }};
-    let currentStartDate = new Date();
+    
+    // Get start of week (Monday) function
+    function getStartOfWeek(date) {
+        const d = new Date(date);
+        const day = d.getDay();
+        const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when Sunday is 0
+        return new Date(d.setDate(diff));
+    }
+    
+    let currentStartDate = getStartOfWeek(new Date());
     let selectedStartSlot = null;
     let selectedEndSlot = null;
     let isSelecting = false;
@@ -1366,14 +1375,6 @@ document.addEventListener('DOMContentLoaded', function() {
         container.innerHTML = calendarHTML;
     }
     
-    // Get start of week (Monday) - keep function for potential future use
-    function getStartOfWeek(date) {
-        const d = new Date(date);
-        const day = d.getDay();
-        const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when Sunday is 0
-        return new Date(d.setDate(diff));
-    }
-    
     // Initialize calendar
     updateDateDisplay();
     loadCalendarData();
@@ -1432,8 +1433,9 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('[data-date-offset]').forEach(button => {
         button.addEventListener('click', function() {
             const offset = parseInt(this.dataset.dateOffset);
-            currentStartDate = new Date();
-            currentStartDate.setDate(currentStartDate.getDate() + offset);
+            const targetDate = new Date();
+            targetDate.setDate(targetDate.getDate() + offset);
+            currentStartDate = getStartOfWeek(targetDate);
             updateDateDisplay();
             
             if (bookingMode === 'daily') {
